@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { Hono } from "hono";
 import { verify } from "hono/jwt";
@@ -17,18 +17,24 @@ const blog = new Hono<{ Bindings: Bindings,Variables:Variables  }>();
 
 blog.use('/*', async (c, next) => {
 	const jwt = c.req.header('Authorization');
-	if(!jwt){
-		c.status(401)
-		return c.json({error:"No token found"})
+	try {
+		if(!jwt){
+			c.status(401)
+			return c.json({error:"No token found"})
+		}
+		const token = jwt.split(' ')[1];
+		const payload = await verify(token,c.env.JWT_SECRET)
+		if(!payload){
+			c.status(404)
+			return c.json({error:"Unauthorize"})
+		}
+		c.set("userId",payload.id)
+		next()
+	} catch (error) {
+		console.log(error);
+		c.status(403);
+		c.json("User not logged in")
 	}
-	const token = jwt.split(' ')[1];
-	const payload = await verify(token,c.env.JWT_SECRET)
-	if(!payload){
-		c.status(404)
-		return c.json({error:"Unauthorize"})
-	}
-	c.set("userId",payload.id)
-	await next()
 })
 
 
@@ -41,7 +47,6 @@ blog.get('/:id', async(c) => {
 	  }).$extends(withAccelerate())
 
 	const id = c.req.param('id')
-	console.log(id);
 	try {
 		const blog = await prisma.post.findUnique({
 			select:{
@@ -90,9 +95,31 @@ blog.post('/', async(c) => {
 	}
 })
 
-blog.put('/', (c) => {
-	
-	return c.text('signin route')
+blog.put('/', async(c) => {
+	const prisma = new PrismaClient({
+		datasourceUrl: c.env.DATABASE_URL,
+	  }).$extends(withAccelerate())
+	  const userId = c.get('userId');
+	  const body = await c.req.json()
+	try {
+		const blog = await prisma.post.update({
+			where:{
+				id:body.id,
+				authorId:userId
+			},
+			data:{
+				title:body.title,
+				content:body.content
+			}
+		})
+
+		c.status(200);
+		c.json(blog)
+	} catch (error) {
+		console.log(error);
+		c.status(404);
+		c.json({error})
+	}
 })
 
 export default blog;
