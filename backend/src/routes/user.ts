@@ -19,7 +19,9 @@ user.post('signup', async(c) => {
 	  }).$extends(withAccelerate())
 
 	const body = await c.req.json()  
-	const {success} = singinBody.safeParse(body)
+	const {success} = singupBody.safeParse(body)
+	console.log(body,success);
+	
 	if(!success){
 		c.status(403)
 		return c.json({message:"Inputs are incorrect"})
@@ -46,7 +48,8 @@ user.post('signup', async(c) => {
 		return c.json("Sign up successfully")
 
 	} catch (error) {
-		c.status(404)
+		console.log(error);
+		c.status(403)
 		return c.json({error})
 	}
 })
@@ -59,7 +62,7 @@ user.post('/signin', async(c) => {
 	  const body = await c.req.json()
 	  const secret =  c.env.JWT_SECRET
 
-	  const {success} = singupBody.safeParse(body)
+	  const {success} = singinBody.safeParse(body)
 	  if(!success){
 		c.status(403)
 		return c.json({message:"Inputs are incorrect"})
@@ -81,7 +84,8 @@ user.post('/signin', async(c) => {
 		c.status(200)
 		return c.json(token)
 	  } catch (error) {
-		c.status(505)
+		console.log(error);
+		c.status(403)
 		return c.json(error)
 	  }
 })

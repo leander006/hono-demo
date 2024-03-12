@@ -1,18 +1,18 @@
 import z from "zod";
-export declare const singinBody: z.ZodObject<{
+export declare const singupBody: z.ZodObject<{
     username: z.ZodString;
-    email: z.ZodString;
+    email: z.ZodOptional<z.ZodString>;
     password: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     username: string;
-    email: string;
     password: string;
+    email?: string | undefined;
 }, {
     username: string;
-    email: string;
     password: string;
+    email?: string | undefined;
 }>;
-export declare const singupBody: z.ZodObject<{
+export declare const singinBody: z.ZodObject<{
     username: z.ZodString;
     password: z.ZodString;
 }, "strip", z.ZodTypeAny, {

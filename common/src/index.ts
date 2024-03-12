@@ -1,12 +1,12 @@
 import z from "zod"
 
-export const singinBody = z.object({
+export const singupBody = z.object({
       username:z.string(),
-      email:z.string().email(),
+      email:z.string().email().optional(),
       password:z.string().min(6)
 })
 
-export const singupBody = z.object({
+export const singinBody = z.object({
       username:z.string(),
       password:z.string().min(6)
 })
