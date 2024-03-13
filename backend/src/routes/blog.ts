@@ -23,8 +23,8 @@ blog.use('/*', async (c, next) => {
 			return c.json("Add jwt token")
 		}
 		const token = jwt.split(' ')[1];
-		const payload = await verify(token,c.env.JWT_SECRET)
-		console.log("payload ",payload);
+		const user = await verify(token,c.env.JWT_SECRET)
+		c.set("userId", user.id);
 		await next()
 	} catch (error) {
 		c.status(403);
@@ -34,7 +34,35 @@ blog.use('/*', async (c, next) => {
 })
 
 
+blog.get('/bulk', async(c) => {
+	 
+	const prisma = new PrismaClient({
+		datasourceUrl: c.env.DATABASE_URL,
+	  }).$extends(withAccelerate())
 
+	try {
+		const blogs = await prisma.post.findMany({
+			select: {
+			    content: true,
+			    title: true,
+			    id: true,
+			    author: {
+				  select: {
+					username: true
+				  }
+			    }
+			}
+		  });
+		console.log(blogs);
+		c.status(200)
+		return c.json(blogs)
+		
+	} catch (error) {
+		c.status(404)
+		return c.json(error)
+	}
+
+})
 
 blog.get('/:id', async(c) => {
 	 
@@ -75,6 +103,8 @@ blog.post('/', async(c) => {
 	const body = await c.req.json()
 
 	const {success} = createBlogBody.safeParse(body)
+	console.log(success," ",c.get("userId"));
+	
 	if(!success){
 		c.status(403)
 		return c.json({message:"Inputs are incorrect"})
@@ -92,6 +122,8 @@ blog.post('/', async(c) => {
 		return c.json({data:blog,message:"Blog created successfully"})
 	} catch (error) {
 		c.status(404)
+		console.log(error);
+		
 		return c.json({error})
 	}
 })
