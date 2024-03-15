@@ -1,13 +1,17 @@
 import { ChangeEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { singinType } from "@leander006/blog-common";
+import { singupType } from "@leander006/blog-common";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
+import { useRecoilState }from 'recoil';
+import { tokenAtom } from "../store/atoms/token";
+import { userAtom } from "../store/atoms/user";
 
 export const Auth = ({ type }: { type: "signup" | "signin" }) => {
     const navigate = useNavigate();
-    
-    const [postInputs, setPostInputs] = useState<singinType>({
+    const [token,setToken] = useRecoilState(tokenAtom);
+    const [user,setUser] = useRecoilState(userAtom);
+    const [postInputs, setPostInputs] = useState<singupType>({
         email: "",
         username: "",
         password: ""
@@ -15,10 +19,14 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
 
     async function sendRequest() {
         try {
-            const response = await axios.post(`${BACKEND_URL}/api/v1/user/${type === "signup" ? "signup" : "signin"}`, postInputs);
-            const jwt = response.data;
+            const {data} = await axios.post(`${BACKEND_URL}/api/v1/user/${type === "signup" ? "signup" : "signin"}`, postInputs);
+            const jwt = data.token;
             localStorage.setItem("token", jwt);
-            navigate("/blogs");
+            localStorage.setItem("user",JSON.stringify(data.user));
+            setToken(jwt);
+            setUser(data.user)
+            type === "signin"?navigate("/blogs"):navigate("/signin");
+
         } catch(e) {
             alert("Error while signing up")
             console.log(e);

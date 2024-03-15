@@ -73,6 +73,11 @@ user.post('/signin', async(c) => {
 		const user = await prisma.user.findUnique({
 			where:{
 				username:body.username,
+			},
+			select:{
+				id:true,
+				username:true,
+				email:true
 			}
 		})
 		if(!user){
@@ -82,7 +87,7 @@ user.post('/signin', async(c) => {
 
 		const token = await sign({id:user.id}, secret)
 		c.status(200)
-		return c.json(token)
+		return c.json({token:token,user:user})
 	  } catch (error) {
 		console.log(error);
 		c.status(403)
